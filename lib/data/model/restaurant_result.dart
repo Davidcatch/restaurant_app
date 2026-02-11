@@ -1,3 +1,28 @@
+class RestaurantResult {
+  final bool error;
+  final String message;
+  final int count;
+  final List<Restaurant> restaurants;
+
+  RestaurantResult({
+    required this.error,
+    required this.message,
+    required this.count,
+    required this.restaurants,
+  });
+
+  factory RestaurantResult.fromJson(Map<String, dynamic> json) {
+    return RestaurantResult(
+      error: json['error'],
+      message: json['message'],
+      count: json['count'],
+      restaurants: (json['restaurants'] as List)
+          .map((e) => Restaurant.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
 class Restaurant {
   final String id;
   final String name;
@@ -30,6 +55,17 @@ class Restaurant {
       address: json['address'],
       menus: json['menus'] != null ? Menus.fromJson(json['menus']) : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'pictureId': pictureId,
+      'city': city,
+      'rating': rating,
+    };
   }
 }
 
