@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/api/result_state.dart';
+import '../data/model/restaurant_result.dart';
+import '../provider/database_provider.dart';
 import '../provider/restaurant_provider.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
@@ -17,7 +19,6 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     super.initState();
     Future.microtask(
       () => Provider.of<RestaurantProvider>(
-        // ignore: use_build_context_synchronously
         context,
         listen: false,
       ).fetchDetail(widget.restaurantId),
@@ -33,12 +34,12 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
             ResultLoading() => const Center(child: CircularProgressIndicator()),
             ResultError(message: var msg) => Center(child: Text(msg)),
             ResultNone() => const SizedBox(),
-            ResultSuccess(data: var restaurant) => SingleChildScrollView(
+            ResultSuccess(data: Restaurant restaurant) => SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: <Widget>[
                   Stack(
-                    children: [
+                    children: <Widget>[
                       Hero(
                         tag: restaurant.pictureId,
                         child: Image.network(
@@ -46,17 +47,23 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                           width: double.infinity,
                           height: 250,
                           fit: BoxFit.cover,
+                          errorBuilder: (ctx, error, _) => const SizedBox(
+                            height: 250,
+                            child: Center(child: Icon(Icons.error)),
+                          ),
                         ),
                       ),
                       SafeArea(
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: CircleAvatar(
-                            backgroundColor: Colors.white,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surface,
                             child: IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back,
-                                color: Colors.black,
+                                color: Theme.of(context).iconTheme.color,
                               ),
                               onPressed: () => Navigator.pop(context),
                             ),
@@ -69,7 +76,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      children: <Widget>[
                         Text(
                           restaurant.name,
                           style: Theme.of(context).textTheme.headlineMedium
@@ -77,7 +84,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                         ),
                         const SizedBox(height: 8),
                         Row(
-                          children: [
+                          children: <Widget>[
                             const Icon(
                               Icons.location_city,
                               color: Colors.grey,
@@ -90,12 +97,11 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 8),
                         if (restaurant.address != null)
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                            children: <Widget>[
                               const Icon(
                                 Icons.place,
                                 color: Colors.grey,
@@ -121,7 +127,6 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                           style: Theme.of(context).textTheme.bodyMedium,
                           textAlign: TextAlign.justify,
                         ),
-
                         const SizedBox(height: 24),
                         Text(
                           "Foods",
@@ -142,7 +147,6 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                             },
                           ),
                         ),
-
                         const SizedBox(height: 16),
                         Text(
                           "Drinks",
@@ -170,7 +174,50 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 ],
               ),
             ),
+            _ => const SizedBox(),
           };
+        },
+      ),
+      floatingActionButton: Consumer<DatabaseProvider>(
+        builder: (context, dbProvider, child) {
+          return FutureBuilder<bool>(
+            future: dbProvider.isFavorited(widget.restaurantId),
+            builder: (context, snapshot) {
+              var isFavorited = snapshot.data ?? false;
+              return FloatingActionButton(
+                onPressed: () {
+                  final restaurantState = Provider.of<RestaurantProvider>(
+                    context,
+                    listen: false,
+                  );
+
+                  if (restaurantState.detailState is ResultSuccess) {
+                    final restaurantData =
+                        (restaurantState.detailState as ResultSuccess).data;
+
+                    if (isFavorited) {
+                      dbProvider.removeFavorite(widget.restaurantId);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Removed from favorite')),
+                      );
+                    } else {
+                      dbProvider.addFavorite(restaurantData);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Added to favorite')),
+                      );
+                    }
+                  }
+                },
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                child: Icon(
+                  isFavorited ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorited
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.onPrimary,
+                ),
+              );
+            },
+          );
         },
       ),
     );
@@ -183,22 +230,17 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
-        children: [
+        children: <Widget>[
           Expanded(
             flex: 2,
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                // ignore: deprecated_member_use
                 color: Theme.of(context).colorScheme.surfaceVariant,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
@@ -207,7 +249,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
               child: Icon(
                 icon,
                 size: 40,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).iconTheme.color,
               ),
             ),
           ),

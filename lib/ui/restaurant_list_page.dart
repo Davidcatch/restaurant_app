@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../data/api/result_state.dart';
 import '../provider/restaurant_provider.dart';
+import '../data/api/result_state.dart';
 import 'restaurant_detail_page.dart';
+import 'favorite_page.dart';
+import 'settings_page.dart';
 
 class RestaurantListPage extends StatelessWidget {
   const RestaurantListPage({super.key});
@@ -10,6 +12,25 @@ class RestaurantListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Restaurant App'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritePage()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -32,10 +53,24 @@ class RestaurantListPage extends StatelessWidget {
                       ResultLoading() => const Center(
                         child: CircularProgressIndicator(),
                       ),
-                      ResultError(message: var msg) => Center(child: Text(msg)),
-                      ResultNone() => const Center(
-                        child: Text("Mulai memuat data..."),
+                      ResultError(message: var msg) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                            Text(
+                              "Gagal memuat data",
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            Text(msg),
+                          ],
+                        ),
                       ),
+                      ResultNone() => const Center(child: Text('Memulai...')),
                       ResultSuccess(data: var restaurants) => ListView.builder(
                         itemCount: restaurants.length,
                         itemBuilder: (context, index) {
@@ -53,11 +88,7 @@ class RestaurantListPage extends StatelessWidget {
                             },
                             child: Card(
                               margin: const EdgeInsets.only(bottom: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   ClipRRect(
                                     borderRadius: const BorderRadius.horizontal(
@@ -71,7 +102,9 @@ class RestaurantListPage extends StatelessWidget {
                                         height: 100,
                                         fit: BoxFit.cover,
                                         errorBuilder: (ctx, error, _) =>
-                                            const Center(
+                                            const SizedBox(
+                                              width: 100,
+                                              height: 100,
                                               child: Icon(Icons.error),
                                             ),
                                       ),
@@ -96,14 +129,15 @@ class RestaurantListPage extends StatelessWidget {
                                               const Icon(
                                                 Icons.location_on,
                                                 size: 16,
-                                                color: Colors.grey,
                                               ),
-                                              const SizedBox(width: 4),
                                               Text(
                                                 restaurant.city,
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyMedium,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: Colors.grey,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -112,16 +146,10 @@ class RestaurantListPage extends StatelessWidget {
                                             children: [
                                               const Icon(
                                                 Icons.star,
-                                                size: 16,
                                                 color: Colors.amber,
+                                                size: 16,
                                               ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                restaurant.rating.toString(),
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyMedium,
-                                              ),
+                                              Text(" ${restaurant.rating}"),
                                             ],
                                           ),
                                         ],
