@@ -1,45 +1,45 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../data/api/api_service.dart';
 import '../data/api/result_state.dart';
-import '../data/model/restaurant.dart';
+import '../data/model/restaurant_result.dart';
 
 class RestaurantProvider extends ChangeNotifier {
   final ApiService apiService;
 
   RestaurantProvider({required this.apiService}) {
-    _fetchAllRestaurants();
+    fetchAllRestaurant();
   }
 
-  ResultState<List<Restaurant>> _listState = ResultNone();
-  ResultState<List<Restaurant>> get listState => _listState;
+  ResultState _listState = ResultNone();
+  ResultState get listState => _listState;
 
-  ResultState<Restaurant> _detailState = ResultNone();
-  ResultState<Restaurant> get detailState => _detailState;
+  ResultState _detailState = ResultNone();
+  ResultState get detailState => _detailState;
 
-  Future<void> _fetchAllRestaurants() async {
-    _listState = ResultLoading();
-    notifyListeners();
+  Future<void> fetchAllRestaurant() async {
     try {
-      final result = await apiService.getList();
-      if (result.isEmpty) {
-        _listState = ResultError("Data tidak ditemukan");
+      _listState = ResultLoading();
+      notifyListeners();
+      final result = await apiService.list();
+      if (result.restaurants.isEmpty) {
+        _listState = ResultError(message: 'No Data');
       } else {
-        _listState = ResultSuccess(result);
+        _listState = ResultSuccess(data: result.restaurants);
       }
     } catch (e) {
-      _listState = ResultError("Terjadi kesalahan koneksi");
+      _listState = ResultError(message: 'Error: $e');
     }
     notifyListeners();
   }
 
   Future<void> fetchDetail(String id) async {
-    _detailState = ResultLoading();
-    notifyListeners();
     try {
+      _detailState = ResultLoading();
+      notifyListeners();
       final result = await apiService.getDetail(id);
-      _detailState = ResultSuccess(result);
+      _detailState = ResultSuccess(data: result);
     } catch (e) {
-      _detailState = ResultError("Gagal memuat detail");
+      _detailState = ResultError(message: 'Error: $e');
     }
     notifyListeners();
   }
