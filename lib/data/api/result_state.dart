@@ -1,15 +1,15 @@
-sealed class ResultState<T> {}
+sealed class ResultState {}
 
-class ResultLoading<T> extends ResultState<T> {}
+class ResultLoading extends ResultState {}
 
-class ResultSuccess<T> extends ResultState<T> {
+class ResultNone extends ResultState {}
+
+class ResultSuccess<T> extends ResultState {
   final T data;
-  ResultSuccess(this.data);
+  ResultSuccess({required this.data});
 }
 
-class ResultError<T> extends ResultState<T> {
+class ResultError extends ResultState {
   final String message;
-  ResultError(this.message);
+  ResultError({required this.message});
 }
-
-class ResultNone<T> extends ResultState<T> {}
